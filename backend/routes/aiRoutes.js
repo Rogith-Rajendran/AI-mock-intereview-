@@ -1,55 +1,14 @@
-/*
-========================================
-CAREERAI ARTIFICIAL INTELLIGENCE ENGINE
-========================================
-
-This system analyzes the student's:
-
-- Academic profile
-- Skills
-- Interests
-- Coding performance
-- Technical quiz performance
-- Interview performance
-- Overall job readiness
-
-The AI identifies:
-
-- Student strengths
-- Student weaknesses
-- Skill gaps
-- Suitable career paths
-- Personalized learning roadmap
-
-This AI engine will later support:
-
-1. AI HR Interview
-2. Higher Studies Guidance
-3. Business Guidance
-4. Final Career Report
-
-========================================
-*/
-
 const express = require("express");
 
 const router = express.Router();
 
 
-/*
-========================================
-GEMINI CLIENT
-========================================
-*/
+// ========================================
+// GEMINI CLIENT
+// ========================================
 
 let geminiAI = null;
 
-
-/*
-========================================
-INITIALIZE GEMINI
-========================================
-*/
 
 async function getGeminiAI() {
 
@@ -59,273 +18,356 @@ async function getGeminiAI() {
       GoogleGenAI
     } = await import("@google/genai");
 
-
     geminiAI = new GoogleGenAI({
-
-      apiKey:
-        process.env.GEMINI_API_KEY
-
+      apiKey: process.env.GEMINI_API_KEY
     });
 
   }
 
-
   return geminiAI;
-
 }
 
 
-/*
-========================================
-TEST ROUTE
-========================================
-*/
+// ========================================
+// TEST ROUTE
+// ========================================
 
-router.get("/test", (req, res) => {
+router.get("/", (req, res) => {
 
   res.json({
-
     success: true,
-
-    message:
-      "CareerAI Gemini AI route is working"
-
+    message: "CareerAI AI HR backend is working"
   });
 
 });
 
 
-/*
-========================================
-AI CAREER ANALYSIS
-========================================
-*/
+// ========================================
+// START AI HR INTERVIEW
+// ========================================
 
-router.post("/analyze", async (req, res) => {
+router.post("/start", async (req, res) => {
+
+  console.log("=================================");
+  console.log("NEW AI HR /start ROUTE HIT");
+  console.log("=================================");
 
   try {
 
-    /*
-    ----------------------------------------
-    GET STUDENT DATA
-    ----------------------------------------
-    */
-
     const {
-
-      profile,
-
-      coding,
-
-      quiz,
-
-      interview,
-
-      readiness
-
+      userId,
+      resume,
+      round1,
+      round2,
+      round3
     } = req.body;
 
 
-    /*
-    ----------------------------------------
-    VALIDATION
-    ----------------------------------------
-    */
+    // ========================================
+    // VALIDATE USER
+    // ========================================
 
-    if (!profile) {
+    if (!userId) {
 
       return res.status(400).json({
-
         success: false,
-
-        message:
-          "Student profile is required"
-
+        message: "User ID is required."
       });
 
     }
 
 
-    /*
-    ----------------------------------------
-    CHECK API KEY
-    ----------------------------------------
-    */
+    // ========================================
+    // VALIDATE RESUME
+    // ========================================
+
+    if (!resume) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Resume is required."
+      });
+
+    }
+
+
+    // ========================================
+    // VALIDATE GEMINI KEY
+    // ========================================
 
     if (!process.env.GEMINI_API_KEY) {
 
+      console.error(
+        "GEMINI_API_KEY is missing."
+      );
+
       return res.status(500).json({
-
         success: false,
-
         message:
-          "Gemini API key is not configured"
-
+          "Gemini API key is not configured."
       });
 
     }
 
 
-    /*
-    ----------------------------------------
-    GEMINI CLIENT
-    ----------------------------------------
-    */
+    // ========================================
+    // GET ROUND SCORES
+    // ========================================
+
+    const aptitudeScore =
+      round1?.percentage ??
+      round1?.score ??
+      0;
+
+
+    const codingScore =
+      round2?.percentage ??
+      round2?.score ??
+      0;
+
+
+    const gdScore =
+      round3?.percentage ??
+      round3?.score ??
+      round3?.overall ??
+      0;
+
+
+    // ========================================
+    // GET RESUME TEXT
+    // ========================================
+
+    const resumeText =
+      resume?.text ||
+      resume?.resumeText ||
+      resume?.parsedText ||
+      resume?.extractedText ||
+      "";
+
+
+    console.log(
+      "User ID:",
+      userId
+    );
+
+    console.log(
+      "Resume file:",
+      resume?.fileName ||
+      resume?.originalName ||
+      "Unknown"
+    );
+
+    console.log(
+      "Resume text available:",
+      Boolean(resumeText)
+    );
+
+    console.log(
+      "Resume text length:",
+      resumeText.length
+    );
+
+    console.log(
+      "Aptitude:",
+      aptitudeScore
+    );
+
+    console.log(
+      "Coding:",
+      codingScore
+    );
+
+    console.log(
+      "GD:",
+      gdScore
+    );
+
+
+    // ========================================
+    // GEMINI CLIENT
+    // ========================================
 
     const ai =
       await getGeminiAI();
 
 
-    /*
-    ----------------------------------------
-    STUDENT DATA
-    ----------------------------------------
-    */
-
-    const studentData = {
-
-      profile:
-        profile || {},
-
-      coding:
-        coding || {},
-
-      quiz:
-        quiz || {},
-
-      interview:
-        interview || {},
-
-      readiness:
-        readiness || {}
-
-    };
-
-
-    /*
-    ----------------------------------------
-    AI INSTRUCTION
-    ----------------------------------------
-    */
+    // ========================================
+    // AI HR PROMPT
+    // ========================================
 
     const prompt = `
 
-You are CareerAI, an intelligent career
-guidance system for college students.
+You are CareerAI's AI HR interviewer.
 
-Your job is to analyze the student's complete
-profile and performance.
+You are conducting the FINAL INTERVIEW
+for a college student.
 
-STUDENT DATA:
-
-${JSON.stringify(
-  studentData,
-  null,
-  2
-)}
+Your job is to ask personalized questions
+based on the candidate's resume and
+performance in the previous three rounds.
 
 
-Analyze the student carefully.
+========================================
+CANDIDATE
+========================================
 
-Identify:
-
-1. Strengths
-2. Weaknesses
-3. Skill gaps
-4. Suitable career paths
-5. Personalized learning roadmap
-6. Higher study suggestions
-7. Job preparation suggestions
+User ID:
+${userId}
 
 
-IMPORTANT:
+========================================
+RESUME
+========================================
 
-- Do not invent information about the student.
-- Base the analysis on the supplied data.
-- Be realistic.
-- Give practical recommendations.
-- Explain why each recommendation is suitable.
-- Focus on helping the student improve.
-- Do not make decisions based on protected characteristics.
-- Do not claim to diagnose personality or mental health.
+${resumeText || "The actual resume text is unavailable. Do not invent resume information."}
 
 
-Return ONLY valid JSON using this structure:
+========================================
+PREVIOUS ROUND PERFORMANCE
+========================================
+
+Round 1 - Aptitude:
+${aptitudeScore}%
+
+Round 2 - Coding:
+${codingScore}%
+
+Round 3 - Group Discussion:
+${gdScore}%
+
+
+========================================
+INTERVIEW OBJECTIVE
+========================================
+
+Analyze the candidate's supplied information.
+
+The interview should be personalized.
+
+If the resume contains Java,
+ask questions related to Java when appropriate.
+
+If the resume contains Spring Boot,
+ask questions related to Spring Boot when appropriate.
+
+If the resume contains backend development,
+ask backend questions when appropriate.
+
+If the resume contains React,
+ask React/web-development questions when appropriate.
+
+If the resume contains projects,
+ask questions about those projects.
+
+If the resume contains internships,
+ask about those internships.
+
+If the resume contains technical skills,
+ask questions about those skills.
+
+Do NOT invent skills,
+projects,
+companies,
+internships,
+experience,
+or technologies.
+
+Only use information actually supplied.
+
+
+========================================
+USE PERFORMANCE
+========================================
+
+Use the previous round scores to personalize
+the interview.
+
+A low aptitude score may justify
+problem-solving questions.
+
+A low coding score may justify
+additional technical questions.
+
+A low GD score may justify
+communication, teamwork and situational questions.
+
+A high coding score may justify
+deeper technical questions.
+
+The interview should not consist only
+of questions from the lowest score.
+
+It should evaluate the candidate
+as a complete candidate.
+
+
+========================================
+QUESTION TYPES
+========================================
+
+The interview can contain:
+
+1. Introduction
+2. Resume questions
+3. Project questions
+4. Technical questions
+5. Behavioral questions
+6. Situational questions
+7. Career questions
+8. Strength and weakness questions
+
+
+========================================
+IMPORTANT
+========================================
+
+Ask ONLY ONE question.
+
+Do not ask multiple questions.
+
+Do not provide the answer.
+
+Do not provide an explanation to the candidate.
+
+Do not make up information.
+
+Return ONLY valid JSON.
+
+
+========================================
+FIRST QUESTION
+========================================
+
+Generate the first interview question.
+
+The first question should normally be
+an appropriate opening HR question.
+
+Return exactly:
 
 {
-  "summary": "short overall analysis",
-
-  "strengths": [
-    "strength 1",
-    "strength 2"
-  ],
-
-  "weaknesses": [
-    "weakness 1",
-    "weakness 2"
-  ],
-
-  "skillGaps": [
-    "skill gap 1",
-    "skill gap 2"
-  ],
-
-  "recommendedCareers": [
-    {
-      "career": "career name",
-      "reason": "why this career fits"
-    }
-  ],
-
-  "higherStudies": [
-    {
-      "program": "program name",
-      "reason": "why this program may fit"
-    }
-  ],
-
-  "jobPreparation": [
-    "recommendation 1",
-    "recommendation 2"
-  ],
-
-  "roadmap": [
-    {
-      "step": 1,
-      "title": "step title",
-      "description": "what the student should do"
-    }
-  ],
-
-  "overallAssessment": {
-    "score": 0,
-    "level": "Beginner"
-  }
+  "question": "question here",
+  "category": "HR",
+  "reason": "short reason"
 }
-
-The score must be between 0 and 100.
-
-The level must be one of:
-
-Beginner
-Developing
-Intermediate
-Job Ready
 
 `;
 
 
-    /*
-    ----------------------------------------
-    CALL GEMINI
-    ----------------------------------------
-    */
+    console.log(
+      "Sending request to Gemini..."
+    );
+
+
+    // ========================================
+    // CALL GEMINI
+    // ========================================
 
     const response =
       await ai.models.generateContent({
 
         model:
-          "gemini-3.6-flash",
+          "gemini-2.5-flash",
 
         contents:
           prompt,
@@ -340,66 +382,108 @@ Job Ready
       });
 
 
-    /*
-    ----------------------------------------
-    GET AI RESPONSE
-    ----------------------------------------
-    */
+    // ========================================
+    // GET GEMINI RESPONSE
+    // ========================================
 
     const responseText =
       response.text;
 
 
-    /*
-    ----------------------------------------
-    PARSE JSON
-    ----------------------------------------
-    */
+    console.log(
+      "Gemini response received."
+    );
 
-    let analysis;
+
+    console.log(
+      "Gemini response:",
+      responseText
+    );
+
+
+    // ========================================
+    // PARSE JSON
+    // ========================================
+
+    let result;
 
 
     try {
 
-      analysis =
+      result =
         JSON.parse(responseText);
 
-    } catch (parseError) {
+    } catch (error) {
 
       console.error(
         "Gemini returned invalid JSON:",
         responseText
       );
 
-
       return res.status(500).json({
 
         success: false,
 
         message:
-          "Gemini returned an invalid analysis"
+          "Gemini returned invalid interview data."
 
       });
 
     }
 
 
-    /*
-    ----------------------------------------
-    RETURN RESULT
-    ----------------------------------------
-    */
+    // ========================================
+    // CHECK QUESTION
+    // ========================================
 
-    res.json({
+    if (!result.question) {
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          "Gemini did not generate a question."
+
+      });
+
+    }
+
+
+    // ========================================
+    // SEND QUESTION TO FRONTEND
+    // ========================================
+
+    return res.json({
 
       success: true,
 
       message:
-        "AI career analysis generated successfully",
+        "AI HR interview started successfully.",
 
-      analysis:
+      question:
+        result.question,
 
-        analysis
+      category:
+        result.category ||
+        "HR",
+
+      reason:
+        result.reason ||
+        "",
+
+      performance: {
+
+        aptitude:
+          aptitudeScore,
+
+        coding:
+          codingScore,
+
+        gd:
+          gdScore
+
+      }
 
     });
 
@@ -408,17 +492,28 @@ Job Ready
   catch (error) {
 
     console.error(
-      "Gemini AI Error:",
+      "================================="
+    );
+
+    console.error(
+      "AI HR ERROR"
+    );
+
+    console.error(
       error
     );
 
+    console.error(
+      "================================="
+    );
 
-    res.status(500).json({
+
+    return res.status(500).json({
 
       success: false,
 
       message:
-        "AI career analysis failed",
+        "Unable to generate AI HR question.",
 
       error:
         error.message
@@ -429,11 +524,5 @@ Job Ready
 
 });
 
-
-/*
-========================================
-EXPORT ROUTER
-========================================
-*/
 
 module.exports = router;

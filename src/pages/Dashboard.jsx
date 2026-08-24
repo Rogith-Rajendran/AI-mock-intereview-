@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
-
   const navigate = useNavigate();
 
   const [jobReadiness, setJobReadiness] =
@@ -14,6 +13,11 @@ function Dashboard() {
   const [codingProgress, setCodingProgress] =
     useState(null);
 
+  /*
+  ========================================
+  CURRENT LOGIN DATA
+  ========================================
+  */
 
   const loggedIn =
     localStorage.getItem("careerAILoggedIn");
@@ -21,260 +25,375 @@ function Dashboard() {
   const userData =
     localStorage.getItem("careerAIUser");
 
-  const profileData =
-    localStorage.getItem("careerAIProfile");
+  let user = null;
 
+  try {
+    user = userData
+      ? JSON.parse(userData)
+      : null;
+  } catch (error) {
+    console.error(
+      "Unable to read user data:",
+      error
+    );
+  }
 
-  const user = userData
-    ? JSON.parse(userData)
-    : null;
+  /*
+  ========================================
+  USER ID
+  ========================================
+  */
 
-  const profile = profileData
-    ? JSON.parse(profileData)
-    : null;
+  const userId =
+    user?._id ||
+    user?.id ||
+    user?.email ||
+    null;
 
+  /*
+  ========================================
+  USER-SPECIFIC PROFILE KEY
+  ========================================
+  */
 
-  // ========================================
-  // LOGIN CHECK
-  // ========================================
+  const profileKey =
+    userId
+      ? `careerAIProfile_${userId}`
+      : null;
+
+  /*
+  ========================================
+  LOGIN CHECK
+  ========================================
+  */
 
   useEffect(() => {
-
     if (loggedIn !== "true") {
-
       navigate("/login");
-
     }
-
   }, [loggedIn, navigate]);
 
+  /*
+  ========================================
+  LOAD USER PROFILE
+  ========================================
+  */
 
-  // ========================================
-  // LOAD JOB READINESS
-  // ========================================
+  const [profile, setProfile] =
+    useState(null);
 
   useEffect(() => {
+    if (!profileKey) {
+      setProfile(null);
+      return;
+    }
 
-    const savedResult =
-      localStorage.getItem(
-        "careerAIJobReadinessResult"
+    const savedProfile =
+      localStorage.getItem(profileKey);
+
+    if (!savedProfile) {
+      setProfile(null);
+      return;
+    }
+
+    try {
+      setProfile(
+        JSON.parse(savedProfile)
+      );
+    } catch (error) {
+      console.error(
+        "Unable to load profile:",
+        error
       );
 
+      setProfile(null);
+    }
+  }, [profileKey]);
+
+  /*
+  ========================================
+  LOAD JOB READINESS
+  ========================================
+  */
+
+  useEffect(() => {
+    if (!userId) {
+      setJobReadiness(null);
+      return;
+    }
+
+    /*
+      New user-specific key
+    */
+    const userSpecificKey =
+      `careerAIJobReadinessResult_${userId}`;
+
+    let savedResult =
+      localStorage.getItem(
+        userSpecificKey
+      );
+
+    /*
+      Backward compatibility:
+      If user-specific data does not exist,
+      check the old global key.
+    */
+    if (!savedResult) {
+      savedResult =
+        localStorage.getItem(
+          "careerAIJobReadinessResult"
+        );
+    }
 
     if (savedResult) {
-
       try {
-
         setJobReadiness(
           JSON.parse(savedResult)
         );
-
       } catch (error) {
-
         console.error(
           "Unable to load Job Readiness result:",
           error
         );
 
+        setJobReadiness(null);
       }
-
+    } else {
+      setJobReadiness(null);
     }
+  }, [userId]);
 
-  }, []);
-
-
-  // ========================================
-  // LOAD INTERVIEW PROGRESS
-  // ========================================
+  /*
+  ========================================
+  LOAD INTERVIEW PROGRESS
+  ========================================
+  */
 
   useEffect(() => {
+    if (!userId) {
+      setInterviewProgress(null);
+      return;
+    }
 
-    const savedProgress =
+    /*
+      New user-specific key
+    */
+    const userSpecificKey =
+      `careerAIInterviewProgress_${userId}`;
+
+    let savedProgress =
       localStorage.getItem(
-        "careerAIInterviewProgress"
+        userSpecificKey
       );
 
+    /*
+      Backward compatibility
+    */
+    if (!savedProgress) {
+      savedProgress =
+        localStorage.getItem(
+          "careerAIInterviewProgress"
+        );
+    }
 
     if (savedProgress) {
-
       try {
-
         setInterviewProgress(
           JSON.parse(savedProgress)
         );
-
       } catch (error) {
-
         console.error(
           "Unable to load Interview progress:",
           error
         );
 
+        setInterviewProgress(null);
       }
-
+    } else {
+      setInterviewProgress(null);
     }
+  }, [userId]);
 
-  }, []);
-
-
-  // ========================================
-  // LOAD CODING PROGRESS
-  // ========================================
+  /*
+  ========================================
+  LOAD CODING PROGRESS
+  ========================================
+  */
 
   useEffect(() => {
+    if (!userId) {
+      setCodingProgress(null);
+      return;
+    }
 
-    const savedProgress =
+    /*
+      New user-specific key
+    */
+    const userSpecificKey =
+      `careerAICodingProgress_${userId}`;
+
+    let savedProgress =
       localStorage.getItem(
-        "careerAICodingProgress"
+        userSpecificKey
       );
 
+    /*
+      Backward compatibility
+    */
+    if (!savedProgress) {
+      savedProgress =
+        localStorage.getItem(
+          "careerAICodingProgress"
+        );
+    }
 
     if (savedProgress) {
-
       try {
-
         setCodingProgress(
           JSON.parse(savedProgress)
         );
-
       } catch (error) {
-
         console.error(
           "Unable to load Coding progress:",
           error
         );
 
+        setCodingProgress(null);
       }
-
+    } else {
+      setCodingProgress(null);
     }
+  }, [userId]);
 
-  }, []);
-
-
-  // ========================================
-  // LOGOUT
-  // ========================================
+  /*
+  ========================================
+  LOGOUT
+  ========================================
+  */
 
   const handleLogout = () => {
-
     localStorage.removeItem(
       "careerAILoggedIn"
     );
 
     navigate("/login");
-
   };
 
-
-  // ========================================
-  // PROFILE
-  // ========================================
+  /*
+  ========================================
+  PROFILE
+  ========================================
+  */
 
   const handleProfile = () => {
-
     navigate("/profile");
-
   };
 
-
-  // ========================================
-  // HIGHER EDUCATION
-  // ========================================
+  /*
+  ========================================
+  HIGHER EDUCATION
+  ========================================
+  */
 
   const handleEducation = () => {
-
     navigate("/education");
-
   };
 
-
-  // ========================================
-  // JOBS
-  // ========================================
+  /*
+  ========================================
+  JOBS
+  ========================================
+  */
 
   const handleJobs = () => {
-
     navigate("/jobs");
-
   };
 
-
-  // ========================================
-  // JOB READINESS
-  // ========================================
+  /*
+  ========================================
+  JOB READINESS
+  ========================================
+  */
 
   const handleJobReadiness = () => {
-
     navigate("/jobs/readiness");
-
   };
 
-
-  // ========================================
-  // INTERVIEW
-  // ========================================
+  /*
+  ========================================
+  INTERVIEW
+  ========================================
+  */
 
   const handleInterview = () => {
-
     navigate("/jobs/practice");
-
   };
 
-
-  // ========================================
-  // CODING
-  // ========================================
+  /*
+  ========================================
+  CODING
+  ========================================
+  */
 
   const handleCoding = () => {
-
     navigate("/jobs/coding");
-
   };
 
-
-  // ========================================
-  // INTERVIEW PERCENTAGE
-  // ========================================
+  /*
+  ========================================
+  INTERVIEW PERCENTAGE
+  ========================================
+  */
 
   const interviewPercentage =
-    interviewProgress
-      ? Math.round(
-          (
-            (interviewProgress.currentQuestion + 1) /
-            interviewProgress.totalQuestions
-          ) * 100
+    interviewProgress &&
+    interviewProgress.totalQuestions > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (
+              (interviewProgress.currentQuestion + 1) /
+              interviewProgress.totalQuestions
+            ) * 100
+          )
         )
       : 0;
-
 
   const interviewCompleted =
     interviewProgress?.completed === true;
 
-
-  // ========================================
-  // CODING PROGRESS
-  // ========================================
+  /*
+  ========================================
+  CODING PROGRESS
+  ========================================
+  */
 
   const totalCodingProblems = 8;
-
 
   const solvedCodingProblems =
     codingProgress?.solvedProblems?.length || 0;
 
-
   const codingPercentage =
-    Math.round(
-      (
-        solvedCodingProblems /
-        totalCodingProblems
-      ) * 100
-    );
+    totalCodingProblems > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (
+              solvedCodingProblems /
+              totalCodingProblems
+            ) * 100
+          )
+        )
+      : 0;
 
+  /*
+  ========================================
+  PAGE
+  ========================================
+  */
 
   return (
-
     <div className="dashboard-page">
-
 
       {/* ==================================
           HEADER
@@ -288,11 +407,9 @@ function Dashboard() {
             CAREERAI DASHBOARD
           </p>
 
-
           <h1>
             Welcome, {user?.name || "Student"}
           </h1>
-
 
           <p>
             Explore your career possibilities and
@@ -300,7 +417,6 @@ function Dashboard() {
           </p>
 
         </div>
-
 
         <button
           className="logout-button"
@@ -324,13 +440,11 @@ function Dashboard() {
             Your Profile
           </h2>
 
-
           {profile ? (
 
             <div className="profile-details">
 
               <div>
-
                 <span>
                   Degree
                 </span>
@@ -338,12 +452,10 @@ function Dashboard() {
                 <strong>
                   {profile.degree}
                 </strong>
-
               </div>
 
 
               <div>
-
                 <span>
                   Branch
                 </span>
@@ -351,12 +463,10 @@ function Dashboard() {
                 <strong>
                   {profile.branch}
                 </strong>
-
               </div>
 
 
               <div>
-
                 <span>
                   Year
                 </span>
@@ -364,12 +474,10 @@ function Dashboard() {
                 <strong>
                   {profile.year}
                 </strong>
-
               </div>
 
 
               <div>
-
                 <span>
                   CGPA
                 </span>
@@ -377,12 +485,10 @@ function Dashboard() {
                 <strong>
                   {profile.cgpa}
                 </strong>
-
               </div>
 
 
               <div>
-
                 <span>
                   Skills
                 </span>
@@ -390,12 +496,10 @@ function Dashboard() {
                 <strong>
                   {profile.skills}
                 </strong>
-
               </div>
 
 
               <div>
-
                 <span>
                   Interests
                 </span>
@@ -403,7 +507,6 @@ function Dashboard() {
                 <strong>
                   {profile.interests}
                 </strong>
-
               </div>
 
             </div>
@@ -415,7 +518,6 @@ function Dashboard() {
               <p>
                 Your profile is not completed yet.
               </p>
-
 
               <button
                 onClick={handleProfile}
@@ -496,7 +598,6 @@ function Dashboard() {
           }}
         >
 
-
           {/* ==================================
               JOB READINESS
           ================================== */}
@@ -561,7 +662,15 @@ function Dashboard() {
                   <div
                     style={{
                       width:
-                        `${jobReadiness.score}%`,
+                        `${Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            Number(
+                              jobReadiness.score
+                            ) || 0
+                          )
+                        )}%`,
                       height: "100%",
                       background: "#2563eb",
                       borderRadius: "10px"
@@ -672,7 +781,10 @@ function Dashboard() {
                     color: "#2563eb"
                   }}
                 >
-                  {interviewProgress.currentQuestion + 1}
+                  {Math.min(
+                    interviewProgress.currentQuestion + 1,
+                    interviewProgress.totalQuestions
+                  )}
                   {" / "}
                   {interviewProgress.totalQuestions}
                 </h2>
@@ -975,8 +1087,9 @@ function Dashboard() {
 
       <div className="dashboard-options">
 
-
-        {/* HIGHER EDUCATION */}
+        {/* ==================================
+            HIGHER EDUCATION
+        ================================== */}
 
         <div className="dashboard-card">
 
@@ -984,17 +1097,14 @@ function Dashboard() {
             01
           </span>
 
-
           <h2>
             Higher Education
           </h2>
-
 
           <p>
             Explore M.Tech, M.Com, MBA, MS and other
             master's degree opportunities after graduation.
           </p>
-
 
           <button
             onClick={handleEducation}
@@ -1005,7 +1115,9 @@ function Dashboard() {
         </div>
 
 
-        {/* JOBS */}
+        {/* ==================================
+            JOBS
+        ================================== */}
 
         <div className="dashboard-card">
 
@@ -1013,17 +1125,14 @@ function Dashboard() {
             02
           </span>
 
-
           <h2>
             Jobs & Interviews
           </h2>
-
 
           <p>
             Practice coding, technical questions,
             assessments and interview preparation.
           </p>
-
 
           <button
             onClick={handleJobs}
@@ -1034,7 +1143,9 @@ function Dashboard() {
         </div>
 
 
-        {/* BUSINESS */}
+        {/* ==================================
+            BUSINESS
+        ================================== */}
 
         <div className="dashboard-card">
 
@@ -1042,19 +1153,22 @@ function Dashboard() {
             03
           </span>
 
-
           <h2>
             Business Ideas
           </h2>
-
 
           <p>
             Discover trending business ideas, startup
             opportunities and entrepreneurship paths.
           </p>
 
-
-          <button>
+          <button
+            onClick={() =>
+              alert(
+                "Business opportunities module is coming soon."
+              )
+            }
+          >
             Explore Business →
           </button>
 
@@ -1063,7 +1177,6 @@ function Dashboard() {
       </div>
 
     </div>
-
   );
 }
 

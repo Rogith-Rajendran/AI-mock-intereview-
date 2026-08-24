@@ -22,6 +22,13 @@ import Quiz from "./pages/Quiz";
 import TopicLesson from "./pages/TopicLesson";
 import JobReadiness from "./pages/JobReadiness";
 import CodingProblems from "./pages/CodingProblems";
+import PlacementAssessment from "./pages/PlacementAssessment";
+import AptitudeRound from "./pages/AptitudeRound";
+import CodingRound from "./pages/CodingRound";
+import GroupDiscussionRound from "./pages/GroupDiscussionRound";
+import ResumeUpload from "./pages/ResumeUpload";
+import AIHRInterview from "./pages/AIHRInterview";
+import AIHRInterviewStart from "./pages/AIHRInterviewStart";
 
 
 /*
@@ -601,6 +608,46 @@ function App() {
 
 
         {/* ==================================
+            PLACEMENT ASSESSMENT
+        ================================== */}
+
+        <Route
+          path="/jobs/assessment"
+          element={<PlacementAssessment />}
+        />
+
+
+        {/* ==================================
+            ROUND 1 — APTITUDE
+        ================================== */}
+
+        <Route
+          path="/jobs/assessment/round-1"
+          element={<AptitudeRound />}
+        />
+
+
+        {/* ==================================
+            ROUND 2 — CODING
+        ================================== */}
+
+        <Route
+          path="/jobs/assessment/round-2"
+          element={<CodingRound />}
+        />
+
+
+        {/* ==================================
+            ROUND 3 — GD
+        ================================== */}
+
+        <Route
+          path="/jobs/assessment/round-3"
+          element={<GroupDiscussionRound />}
+        />
+
+
+        {/* ==================================
             JOB READINESS
         ================================== */}
 
@@ -608,6 +655,37 @@ function App() {
           path="/jobs/readiness"
           element={<JobReadiness />}
         />
+
+
+        {/* ==================================
+            RESUME UPLOAD
+        ================================== */}
+
+        <Route
+          path="/resume-upload"
+          element={<ResumeUpload />}
+        />
+
+
+        {/* ==================================
+            AI HR INTERVIEW
+        ================================== */}
+
+        <Route
+          path="/jobs/hr-interview"
+          element={<AIHRInterview />}
+        />
+
+
+        {/* ==================================
+            ACTUAL AI HR INTERVIEW
+        ================================== */}
+
+        <Route
+  path="/jobs/hr-interview"
+  element={<AIHRInterview />}
+/>
+
 
       </Routes>
 

@@ -10,6 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "mammoth": "^1.12.1",
+    "mongoose": "^9.9.3",
+    "multer": "^2.2.0",
+    "pdf-parse": "^2.4.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
